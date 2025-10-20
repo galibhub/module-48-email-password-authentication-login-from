@@ -1,4 +1,8 @@
-import { createUserWithEmailAndPassword, sendEmailVerification } from "firebase/auth";
+import {
+  createUserWithEmailAndPassword,
+  sendEmailVerification,
+  updateProfile,
+} from "firebase/auth";
 import React, { useState } from "react";
 import { auth } from "../../firebase/firebase.init";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
@@ -7,14 +11,16 @@ import { Link } from "react-router";
 const Register = () => {
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState("");
-  const [showPassword,setShowPassword]=useState(false)
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleResister = (event) => {
     event.preventDefault();
     const email = event.target.email.value;
     const password = event.target.password.value;
     const terms = event.target.terms.checked;
-    console.log("Resister Clicked", email, password,terms);
+    const name = event.target.name.value;
+    const photo = event.target.photo.value;
+    console.log("Resister Clicked", email, password, terms, name, photo);
 
     //validation
     // const length6Pattern=/^.{6,}$/;
@@ -42,11 +48,10 @@ const Register = () => {
     //reset ststus: success or error
     setError("");
     setSuccess(false);
-   if(!terms)
-   {
-    setError("Please accept our terms and condition")
-    return;
-   }
+    if (!terms) {
+      setError("Please accept our terms and condition");
+      return;
+    }
 
     const passwordPattern =
       /^(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*(),.?":{}|<>]).{6,}$/;
@@ -64,11 +69,22 @@ const Register = () => {
         console.log("After Creation of a new user", result.user);
         setSuccess(true);
         event.target.reset();
+
+        //update user profile
+        const profile = {
+          displayName: name,
+          photoURL: photo, 
+        };
+
+        updateProfile(result.user, profile)
+          .then(() => {})
+          .catch((error) => {
+            console.log("Profile update error:", error.message);
+          });
         //send verfication mail
-        sendEmailVerification(result.user)
-        .then(()=>{
-            alert("Please login to your email and verify")
-        })
+        sendEmailVerification(result.user).then(() => {
+          alert("Please login to your email and verify");
+        });
       })
       .catch((error) => {
         console.log("Error Happend", error.message);
@@ -77,10 +93,10 @@ const Register = () => {
       });
   };
 
-  const handleTogglePasswordShow=(event)=>{
-   event.preventDefault();
-   setShowPassword(!showPassword)
-  }
+  const handleTogglePasswordShow = (event) => {
+    event.preventDefault();
+    setShowPassword(!showPassword);
+  };
 
   return (
     <div className="hero bg-base-200 min-h-screen">
@@ -92,6 +108,22 @@ const Register = () => {
           <div className="card-body">
             <form onSubmit={handleResister}>
               <fieldset className="fieldset">
+                <label className="label">Name</label>
+                <input
+                  type="text"
+                  name="name"
+                  className="input"
+                  placeholder="Your name"
+                />
+
+                <label className="label">Photo URL</label>
+                <input
+                  type="text"
+                  name="photo"
+                  className="input"
+                  placeholder="Photo URL"
+                />
+
                 <label className="label">Email</label>
                 <input
                   type="email"
@@ -99,6 +131,7 @@ const Register = () => {
                   className="input"
                   placeholder="Email"
                 />
+
                 <label className="label">Password</label>
                 <div className="relative">
                   <input
@@ -133,7 +166,12 @@ const Register = () => {
               )}
               {error && <p className="text-red-500">{error}</p>}
             </form>
-            <p>Already have an account? <Link className="text-blue-400 underline" to="/login">login</Link></p>
+            <p>
+              Already have an account?{" "}
+              <Link className="text-blue-400 underline" to="/login">
+                login
+              </Link>
+            </p>
           </div>
         </div>
       </div>
